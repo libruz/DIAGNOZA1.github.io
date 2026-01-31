@@ -1,1 +1,1108 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIAGNOZA Z J. ANGIELSKIEGO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --light-green: #4caf50;
+            --dark-green: #1b5e20;
+            --background: #f1f8e9;
+            --text: #1a1a1a;
+            --card-bg: #ffffff;
+            --shadow: rgba(46, 125, 50, 0.15);
+            --gray: #e0e0e0;
+            --yellow: #ffd54f;
+            --red: #e53935;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            display: none;
+        }
+        
+        .container.active {
+            display: block;
+        }
+        
+        /* Styl dla ekranu rejestracji */
+        #registration-screen {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow);
+            padding: 40px;
+            border-top: 8px solid var(--primary-green);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: var(--primary-green);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .logo h2 {
+            color: var(--dark-green);
+            font-weight: 400;
+            font-size: 1.3rem;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--gray);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--light-green);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-green);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background-color: #757575;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #616161;
+        }
+        
+        /* Styl dla ekranu testu */
+        #test-screen {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow);
+            overflow: hidden;
+            min-height: 600px;
+        }
+        
+        .test-header {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .test-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .student-info {
+            font-size: 1rem;
+            text-align: right;
+        }
+        
+        .question-container {
+            padding: 30px;
+            min-height: 400px;
+        }
+        
+        .question-number {
+            color: var(--primary-green);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+        
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .option {
+            padding: 15px 20px;
+            border: 2px solid var(--gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .option:hover {
+            background-color: #f9f9f9;
+            border-color: var(--light-green);
+        }
+        
+        .option.selected {
+            background-color: #e8f5e9;
+            border-color: var(--light-green);
+            font-weight: 600;
+        }
+        
+        .option-letter {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary-green);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 15px;
+            font-weight: 600;
+        }
+        
+        .option.selected .option-letter {
+            background-color: var(--dark-green);
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 30px;
+            border-top: 1px solid var(--gray);
+        }
+        
+        /* Styl dla paska postępu */
+        .progress-container {
+            padding: 0 30px 25px 30px;
+        }
+        
+        .progress-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .progress-item {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            background-color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .progress-item.visited {
+            background-color: var(--yellow);
+            border-color: #ffb300;
+        }
+        
+        .progress-item.answered {
+            background-color: var(--light-green);
+            color: white;
+            border-color: var(--primary-green);
+        }
+        
+        .progress-item.current {
+            border: 2px solid var(--dark-green);
+            transform: scale(1.1);
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* Styl dla ekranu wyników */
+        #results-screen {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow);
+            padding: 40px;
+            border-top: 8px solid var(--primary-green);
+        }
+        
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .results-header h2 {
+            color: var(--primary-green);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .score-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f1f8e9;
+            border-radius: 10px;
+        }
+        
+        .score {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            line-height: 1;
+        }
+        
+        .max-score {
+            font-size: 1.5rem;
+            color: #666;
+        }
+        
+        .level-recommendation {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border-radius: 10px;
+        }
+        
+        .level-recommendation h3 {
+            color: var(--dark-green);
+            margin-bottom: 10px;
+        }
+        
+        .level {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+        
+        .results-details {
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .result-item.correct {
+            background-color: #e8f5e9;
+        }
+        
+        .result-item.incorrect {
+            background-color: #ffebee;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .actions .btn {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* Responsywność */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            #registration-screen, #results-screen {
+                margin: 20px auto;
+                padding: 25px;
+            }
+            
+            .test-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .student-info {
+                text-align: left;
+            }
+            
+            .progress-item {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .question-text {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ekran rejestracji -->
+    <div id="registration-screen" class="container active">
+        <div class="logo">
+            <h1>DIAGNOZA Z J. ANGIELSKIEGO</h1>
+            <h2>Test poziomujący - 4 MINDS POLISH EDITION</h2>
+        </div>
+        
+        <form id="registration-form">
+            <div class="form-group">
+                <label for="firstName">Imię:</label>
+                <input type="text" id="firstName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName">Nazwisko:</label>
+                <input type="text" id="lastName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="class">Klasa:</label>
+                <select id="class" required>
+                    <option value="">-- Wybierz klasę --</option>
+                    <option value="2LO">2LO</option>
+                    <option value="1LO">1LO</option>
+                    <option value="1TTK">1TTK</option>
+                    <option value="2TTK">2TTK</option>
+                    <option value="1ELE">1ELE</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn">Rozpocznij test</button>
+        </form>
+    </div>
+    
+    <!-- Ekran testu -->
+    <div id="test-screen" class="container">
+        <div class="test-header">
+            <h2>DIAGNOZA Z J. ANGIELSKIEGO</h2>
+            <div class="student-info">
+                <div id="student-name-display"></div>
+                <div id="student-class-display"></div>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">
+                <!-- Pasek postępu zostanie wygenerowany dynamicznie -->
+            </div>
+            <div class="progress-info">
+                <span>Postęp: <span id="progress-text">0/45</span></span>
+                <span>Czas: <span id="timer">45:00</span></span>
+            </div>
+        </div>
+        
+        <div class="question-container">
+            <div class="question-number" id="question-number">Pytanie 1 z 45</div>
+            <div class="question-text" id="question-text"></div>
+            
+            <div class="options-container" id="options-container">
+                <!-- Opcje odpowiedzi zostaną wygenerowane dynamicznie -->
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <button id="prev-btn" class="btn btn-secondary">Poprzednie</button>
+            <button id="next-btn" class="btn">Dalej</button>
+            <button id="save-btn" class="btn" style="display: none;">Zapisz i przejdź dalej</button>
+        </div>
+    </div>
+    
+    <!-- Ekran wyników -->
+    <div id="results-screen" class="container">
+        <div class="results-header">
+            <h2>Wyniki testu</h2>
+            <div id="results-student-info"></div>
+        </div>
+        
+        <div class="score-container">
+            <div class="score" id="final-score">0</div>
+            <div class="max-score">z 45 punktów</div>
+        </div>
+        
+        <div class="level-recommendation">
+            <h3>Zalecany poziom podręcznika:</h3>
+            <div class="level" id="recommended-level">4Minds A2+</div>
+        </div>
+        
+        <div class="results-details" id="results-details">
+            <!-- Szczegóły wyników zostaną wygenerowane dynamicznie -->
+        </div>
+        
+        <div class="actions">
+            <button id="generate-pdf" class="btn">Pobierz raport PDF</button>
+            <button id="restart-test" class="btn btn-secondary">Rozpocznij nowy test</button>
+        </div>
+    </div>
+
+    <script>
+        // Dane testu - pytania i klucz odpowiedzi
+        const testData = {
+            testName: "DIAGNOZA Z J. ANGIELSKIEGO",
+            questions: [
+                // Grammar Part (1-15)
+                { id: 1, text: "Molly . from Monday to Friday every week.", options: ["works", "is working", "worked", "has worked"], correct: "A", part: "Grammar" },
+                { id: 2, text: "I like . by plane.", options: ["travelled", "travel", "to travelling", "travelling"], correct: "D", part: "Grammar" },
+                { id: 3, text: "you close the door, please?", options: ["Can't", "Can", "Should", "Must"], correct: "B", part: "Grammar" },
+                { id: 4, text: "How . butter do we need to bake a cake?", options: ["any", "many", "much", "little"], correct: "C", part: "Grammar" },
+                { id: 5, text: "Laura and Darek . about going to the USA this summer.", options: ["think", "are thinking", "thinks", "thinking"], correct: "B", part: "Grammar" },
+                { id: 6, text: "Greg hasn't sent me a message", options: ["yet", "still", "never", "already"], correct: "A", part: "Grammar" },
+                { id: 7, text: "If I get a part-time job, I . a new smartphone.", options: ["buy", "will buy", "bought", "am buying"], correct: "B", part: "Grammar" },
+                { id: 8, text: "I won't buy those trousers. They're . expensive.", options: ["too", "enough", "as", "more"], correct: "A", part: "Grammar" },
+                { id: 9, text: "Tracy . the bus, so she was late for work.", options: ["has missed", "had missed", "miss", "misses"], correct: "B", part: "Grammar" },
+                { id: 10, text: 'X: "Pat doesn\'t like watching horror films." Y: " does Phil."', options: ["So", "Neither", "As", "Both"], correct: "B", part: "Grammar" },
+                { id: 11, text: "This time tomorrow we . to Madrid.", options: ["will be travelling", "travelled", "are travelling", "will travel"], correct: "A", part: "Grammar" },
+                { id: 12, text: "She had her photo . by a famous photographer.", options: ["take", "took", "taken", "taking"], correct: "C", part: "Grammar" },
+                { id: 13, text: "The binoculars I bought from the travel shop . practical for safaris.", options: ["is", "are", "be", "been"], correct: "B", part: "Grammar" },
+                { id: 14, text: "The government has considered . environmental laws to protect natural areas.", options: ["to change", "changing", "changes", "change"], correct: "B", part: "Grammar" },
+                { id: 15, text: "you witnessed a burglary, what would you do?", options: ["Suppose", "In case", "Unless", "As long as"], correct: "A", part: "Grammar" },
+                
+                // Vocabulary Part (16-30)
+                { id: 16, text: "We're going to the ....... tonight to watch a film.", options: ["cinema", "theatre", "club", "gym"], correct: "A", part: "Vocabulary" },
+                { id: 17, text: "Customers should always receive a ....... for the things they buy.", options: ["change", "receipt", "card", "credit"], correct: "B", part: "Vocabulary" },
+                { id: 18, text: "A ....... repairs broken cars.", options: ["vet", "journalist", "dentist", "mechanic"], correct: "D", part: "Vocabulary" },
+                { id: 19, text: "Mum is going to ....... chocolate muffins for my birthday party.", options: ["roast", "grill", "bake", "boil"], correct: "C", part: "Vocabulary" },
+                { id: 20, text: "It's kind to ....... your seat to old people on a bus.", options: ["take", "collect", "give", "spend"], correct: "C", part: "Vocabulary" },
+                { id: 21, text: "Chris usually listens ....... music when he is sad.", options: ["about", "to", "up", "at"], correct: "B", part: "Vocabulary" },
+                { id: 22, text: "My sister is so intelligent; she always gets the best ....... on her tests.", options: ["diplomas", "degrees", "goals", "marks"], correct: "D", part: "Vocabulary" },
+                { id: 23, text: "If your new dress doesn't suit you, ....... it to the shop.", options: ["return", "change", "sell", "rent"], correct: "A", part: "Vocabulary" },
+                { id: 24, text: "Julia loves ....... selfies on social media.", options: ["taking", "communicating", "uploading", "spending"], correct: "C", part: "Vocabulary" },
+                { id: 25, text: "We're going to book a 3-week cruise to ....... around Europe.", options: ["fly", "sail", "ride", "drive"], correct: "B", part: "Vocabulary" },
+                { id: 26, text: "I didn't ....... for my maths exam and failed it.", options: ["pass", "take", "revise", "attend"], correct: "C", part: "Vocabulary" },
+                { id: 27, text: "Amanda doesn't like lemons; they're too ....... for her.", options: ["hot", "sour", "juicy", "salty"], correct: "B", part: "Vocabulary" },
+                { id: 28, text: "South Korea has noticed a steady ....... in birth rates over the last few decades.", options: ["expansion", "decline", "slip", "majority"], correct: "B", part: "Vocabulary" },
+                { id: 29, text: "If a firewall detects a potential threat, it will automatically ....... an alert to notify the IT team.", options: ["pull", "tap", "monitor", "trigger"], correct: "D", part: "Vocabulary" },
+                { id: 30, text: "Jane had to pay a ....... for parking illegally.", options: ["tribute", "debt", "fine", "price"], correct: "C", part: "Vocabulary" },
+                
+                // Use of English Part (31-40)
+                { id: 31, text: "Greetings from Beijing. Liz and I have ....... in China for a week now.", options: ["gone", "been", "arrived", "come"], correct: "B", part: "Use of English" },
+                { id: 32, text: "We've already visited ....... of interesting places but there's so much we haven't seen", options: ["much", "few", "a little", "a lot"], correct: "D", part: "Use of English" },
+                { id: 33, text: "We've already visited a lot of interesting places but there's so much we haven't seen .......", options: ["just", "already", "yet", "never"], correct: "C", part: "Use of English" },
+                { id: 34, text: "Yesterday we ....... to the Summer Palace", options: ["went", "saw", "got", "left"], correct: "A", part: "Use of English" },
+                { id: 35, text: "Yesterday we went to the Summer Palace ....... is one of the most famous royal gardens", options: ["where", "who", "whose", "which"], correct: "D", part: "Use of English" },
+                { id: 36, text: "It is one of the most famous royal gardens in the .......", options: ["world", "globe", "continent", "countryside"], correct: "A", part: "Use of English" },
+                { id: 37, text: "It's also very well-preserved, so ....... can see many of its beautiful features.", options: ["spectators", "visitors", "strangers", "neighbours"], correct: "B", part: "Use of English" },
+                { id: 38, text: "Well, I ....... go and get some rest now.", options: ["prefer", "need", "had better", "want"], correct: "C", part: "Use of English" },
+                { id: 39, text: "Tomorrow we're visiting ....... city, so we have to get up early.", options: ["next", "other", "new", "another"], correct: "D", part: "Use of English" },
+                { id: 40, text: "See you ....... a week!", options: ["for", "in", "after", "behind"], correct: "B", part: "Use of English" },
+                
+                // Reading Part (41-45)
+                { id: 41, text: "Where is Leo climbing in the story?", options: ["on Mount Everest", "on an island", "in Yosemite National Park", "in the desert"], correct: "B", part: "Reading" },
+                { id: 42, text: "What does Leo use to go back down after reaching the top of the cliff?", options: ["parachute", "rope", "hammock", "only his feet"], correct: "A", part: "Reading" },
+                { id: 43, text: "Why is Leo's style of climbing dangerous?", options: ["He only uses ropes and no other equipment", "He avoids checking weather conditions", "He doesn't use any equipment", "He usually climbs in the dark"], correct: "C", part: "Reading" },
+                { id: 44, text: "How does Leo describe the experience of waking up on a cliff?", options: ["tiring and uncomfortable", "cold and scary", "enjoyable and unique", "ordinary and boring"], correct: "C", part: "Reading" },
+                { id: 45, text: "What does Leo's story show about his personality?", options: ["He prefers safe and easy adventures", "He avoids risk because of his fear of heights", "He is focused on money and fame", "He combines bravery with a constant search for challenges"], correct: "D", part: "Reading" }
+            ],
+            
+            // Klucz odpowiedzi
+            answerKey: {
+                1: "A", 2: "D", 3: "B", 4: "C", 5: "B", 6: "A", 7: "B", 8: "A", 9: "B", 10: "B",
+                11: "A", 12: "C", 13: "B", 14: "B", 15: "A", 16: "A", 17: "B", 18: "D", 19: "C", 20: "C",
+                21: "B", 22: "D", 23: "A", 24: "C", 25: "B", 26: "C", 27: "B", 28: "B", 29: "D", 30: "C",
+                31: "B", 32: "D", 33: "C", 34: "A", 35: "D", 36: "A", 37: "B", 38: "C", 39: "D", 40: "B",
+                41: "B", 42: "A", 43: "C", 44: "C", 45: "D"
+            },
+            
+            // Poziomy rekomendacji
+            levels: {
+                "0-11": "4Minds A2+",
+                "12-25": "4Minds B1",
+                "26-39": "4Minds B1+",
+                "40-45": "4Minds B2"
+            }
+        };
+        
+        // Dane ucznia
+        let studentData = {
+            firstName: "",
+            lastName: "",
+            class: "",
+            startTime: null,
+            endTime: null,
+            answers: {},
+            score: 0
+        };
+        
+        // Stan aplikacji
+        let currentQuestion = 1;
+        let totalQuestions = testData.questions.length;
+        let testStarted = false;
+        let timeLeft = 45 * 60; // 45 minut w sekundach
+        let timerInterval = null;
+        
+        // Elementy DOM
+        const registrationScreen = document.getElementById('registration-screen');
+        const testScreen = document.getElementById('test-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const registrationForm = document.getElementById('registration-form');
+        const studentNameDisplay = document.getElementById('student-name-display');
+        const studentClassDisplay = document.getElementById('student-class-display');
+        const questionNumber = document.getElementById('question-number');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const timer = document.getElementById('timer');
+        const finalScore = document.getElementById('final-score');
+        const recommendedLevel = document.getElementById('recommended-level');
+        const resultsDetails = document.getElementById('results-details');
+        const resultsStudentInfo = document.getElementById('results-student-info');
+        const generatePdfBtn = document.getElementById('generate-pdf');
+        const restartTestBtn = document.getElementById('restart-test');
+        
+        // Inicjalizacja Supabase
+        const supabaseUrl = 'https://cggaxxoltsocbaavrkvn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnZ2F4eG9sdHNvY2JhYXZya3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4Nzc3MzcsImV4cCI6MjA4NTQ1MzczN30.tpyT6QxTUsJmPWAQhwlzag-cliQ6TQ7PEWt3mg0f8A0';
+        
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Rejestracja ucznia
+        registrationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            studentData.firstName = document.getElementById('firstName').value.trim();
+            studentData.lastName = document.getElementById('lastName').value.trim();
+            studentData.class = document.getElementById('class').value;
+            studentData.startTime = new Date();
+            
+            if (!studentData.firstName || !studentData.lastName || !studentData.class) {
+                alert("Proszę wypełnić wszystkie pola!");
+                return;
+            }
+            
+            // Przejście do ekranu testu
+            registrationScreen.classList.remove('active');
+            testScreen.classList.add('active');
+            
+            // Aktualizacja informacji o uczniu
+            studentNameDisplay.textContent = `${studentData.firstName} ${studentData.lastName}`;
+            studentClassDisplay.textContent = `Klasa: ${studentData.class}`;
+            
+            // Inicjalizacja testu
+            initTest();
+            startTimer();
+        });
+        
+        // Inicjalizacja testu
+        function initTest() {
+            currentQuestion = 1;
+            testStarted = true;
+            
+            // Generowanie paska postępu
+            generateProgressBar();
+            
+            // Wyświetlenie pierwszego pytania
+            showQuestion(currentQuestion);
+            
+            // Aktualizacja przycisków nawigacji
+            updateNavigationButtons();
+        }
+        
+        // Generowanie paska postępu
+        function generateProgressBar() {
+            progressBar.innerHTML = '';
+            
+            for (let i = 1; i <= totalQuestions; i++) {
+                const progressItem = document.createElement('div');
+                progressItem.className = 'progress-item';
+                progressItem.textContent = i;
+                progressItem.dataset.question = i;
+                
+                // Oznaczenie aktualnego pytania
+                if (i === currentQuestion) {
+                    progressItem.classList.add('current');
+                }
+                
+                // Oznaczenie odwiedzonych pytań
+                if (studentData.answers[i]) {
+                    progressItem.classList.add('answered');
+                } else if (i < currentQuestion) {
+                    progressItem.classList.add('visited');
+                }
+                
+                progressItem.addEventListener('click', function() {
+                    const questionNum = parseInt(this.dataset.question);
+                    if (questionNum !== currentQuestion) {
+                        currentQuestion = questionNum;
+                        showQuestion(currentQuestion);
+                        generateProgressBar();
+                        updateNavigationButtons();
+                    }
+                });
+                
+                progressBar.appendChild(progressItem);
+            }
+            
+            // Aktualizacja tekstu postępu
+            const answeredCount = Object.keys(studentData.answers).length;
+            progressText.textContent = `${answeredCount}/${totalQuestions}`;
+        }
+        
+        // Wyświetlanie pytania
+        function showQuestion(questionNum) {
+            const question = testData.questions.find(q => q.id === questionNum);
+            
+            if (!question) return;
+            
+            // Aktualizacja numeru pytania
+            questionNumber.textContent = `Pytanie ${questionNum} z ${totalQuestions} (${question.part})`;
+            
+            // Aktualizacja tekstu pytania
+            questionText.textContent = question.text;
+            
+            // Generowanie opcji odpowiedzi
+            optionsContainer.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+            
+            letters.forEach((letter, index) => {
+                const option = document.createElement('div');
+                option.className = 'option';
+                if (studentData.answers[questionNum] === letter) {
+                    option.classList.add('selected');
+                }
+                
+                option.innerHTML = `
+                    <div class="option-letter">${letter}</div>
+                    <div class="option-text">${question.options[index]}</div>
+                `;
+                
+                option.addEventListener('click', function() {
+                    // Usunięcie selekcji z innych opcji
+                    document.querySelectorAll('.option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Zaznaczenie wybranej opcji
+                    this.classList.add('selected');
+                    
+                    // Zapisanie odpowiedzi
+                    studentData.answers[questionNum] = letter;
+                    
+                    // Aktualizacja paska postępu
+                    generateProgressBar();
+                    
+                    // Aktualizacja przycisków nawigacji
+                    updateNavigationButtons();
+                });
+                
+                optionsContainer.appendChild(option);
+            });
+            
+            // Aktualizacja paska postępu - oznaczenie aktualnego pytania
+            generateProgressBar();
+        }
+        
+        // Aktualizacja przycisków nawigacji
+        function updateNavigationButtons() {
+            // Przycisk "Poprzednie"
+            prevBtn.style.display = currentQuestion > 1 ? 'inline-block' : 'none';
+            
+            // Przycisk "Dalej" i "Zapisz"
+            const allQuestionsAnswered = Object.keys(studentData.answers).length === totalQuestions;
+            
+            if (allQuestionsAnswered && currentQuestion === totalQuestions) {
+                nextBtn.style.display = 'none';
+                saveBtn.style.display = 'inline-block';
+            } else {
+                nextBtn.style.display = 'inline-block';
+                saveBtn.style.display = 'none';
+            }
+            
+            // Zmiana tekstu przycisku "Dalej" na "Zakończ" dla ostatniego pytania
+            if (currentQuestion === totalQuestions) {
+                nextBtn.textContent = allQuestionsAnswered ? "Zakończ test" : "Dalej";
+            } else {
+                nextBtn.textContent = "Dalej";
+            }
+        }
+        
+        // Nawigacja do poprzedniego pytania
+        prevBtn.addEventListener('click', function() {
+            if (currentQuestion > 1) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+                generateProgressBar();
+                updateNavigationButtons();
+            }
+        });
+        
+        // Nawigacja do następnego pytania
+        nextBtn.addEventListener('click', function() {
+            if (currentQuestion < totalQuestions) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+                generateProgressBar();
+                updateNavigationButtons();
+            } else if (currentQuestion === totalQuestions && Object.keys(studentData.answers).length === totalQuestions) {
+                // Zakończenie testu
+                finishTest();
+            }
+        });
+        
+        // Przycisk zapisz
+        saveBtn.addEventListener('click', function() {
+            finishTest();
+        });
+        
+        // Timer
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishTest();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Zakończenie testu
+        function finishTest() {
+            clearInterval(timerInterval);
+            studentData.endTime = new Date();
+            
+            // Obliczenie wyniku
+            calculateScore();
+            
+            // Przejście do ekranu wyników
+            testScreen.classList.remove('active');
+            resultsScreen.classList.add('active');
+            
+            // Wyświetlenie wyników
+            displayResults();
+            
+            // Wysłanie wyników do bazy danych
+            sendResultsToDatabase();
+        }
+        
+        // Obliczenie wyniku
+        function calculateScore() {
+            let score = 0;
+            
+            for (const [questionNum, answer] of Object.entries(studentData.answers)) {
+                if (testData.answerKey[questionNum] === answer) {
+                    score++;
+                }
+            }
+            
+            studentData.score = score;
+        }
+        
+        // Wyświetlanie wyników
+        function displayResults() {
+            // Informacje o uczniu
+            resultsStudentInfo.innerHTML = `
+                <p><strong>${studentData.firstName} ${studentData.lastName}</strong></p>
+                <p>Klasa: ${studentData.class}</p>
+                <p>Czas ukończenia: ${formatTime(studentData.startTime, studentData.endTime)}</p>
+            `;
+            
+            // Wynik
+            finalScore.textContent = studentData.score;
+            
+            // Zalecany poziom
+            const score = studentData.score;
+            let recommended = "4Minds A2+";
+            
+            if (score >= 40) recommended = "4Minds B2";
+            else if (score >= 26) recommended = "4Minds B1+";
+            else if (score >= 12) recommended = "4Minds B1";
+            
+            recommendedLevel.textContent = recommended;
+            
+            // Szczegóły wyników
+            resultsDetails.innerHTML = '';
+            
+            // Podsumowanie części
+            const partScores = {
+                "Grammar": { correct: 0, total: 15 },
+                "Vocabulary": { correct: 0, total: 15 },
+                "Use of English": { correct: 0, total: 10 },
+                "Reading": { correct: 0, total: 5 }
+            };
+            
+            testData.questions.forEach(question => {
+                const userAnswer = studentData.answers[question.id];
+                const correctAnswer = testData.answerKey[question.id];
+                const isCorrect = userAnswer === correctAnswer;
+                
+                if (isCorrect) {
+                    partScores[question.part].correct++;
+                }
+                
+                const resultItem = document.createElement('div');
+                resultItem.className = `result-item ${isCorrect ? 'correct' : 'incorrect'}`;
+                resultItem.innerHTML = `
+                    <div>
+                        <strong>Pytanie ${question.id}</strong> (${question.part}): ${question.text.substring(0, 50)}...
+                    </div>
+                    <div>
+                        Twoja odpowiedź: <strong>${userAnswer || 'Brak'}</strong> | 
+                        Poprawna odpowiedź: <strong>${correctAnswer}</strong>
+                    </div>
+                `;
+                
+                resultsDetails.appendChild(resultItem);
+            });
+            
+            // Dodanie podsumowania części
+            const summaryItem = document.createElement('div');
+            summaryItem.className = 'result-item';
+            summaryItem.innerHTML = `
+                <div><strong>Podsumowanie części testu:</strong></div>
+                <div>
+                    Grammar: ${partScores.Grammar.correct}/${partScores.Grammar.total} |
+                    Vocabulary: ${partScores.Vocabulary.correct}/${partScores.Vocabulary.total} |
+                    Use of English: ${partScores["Use of English"].correct}/${partScores["Use of English"].total} |
+                    Reading: ${partScores.Reading.correct}/${partScores.Reading.total}
+                </div>
+            `;
+            
+            resultsDetails.insertBefore(summaryItem, resultsDetails.firstChild);
+        }
+        
+        // Formatowanie czasu
+        function formatTime(startTime, endTime) {
+            const diffMs = endTime - startTime;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffSecs = Math.floor((diffMs % 60000) / 1000);
+            return `${diffMins} min ${diffSecs} sek`;
+        }
+        
+        // Generowanie PDF
+        generatePdfBtn.addEventListener('click', function() {
+            generatePDF();
+        });
+        
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Nagłówek
+            doc.setFontSize(20);
+            doc.setTextColor(46, 125, 50); // Zielony kolor
+            doc.text("DIAGNOZA Z J. ANGIELSKIEGO", 105, 15, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text("Test poziomujący - 4 MINDS POLISH EDITION", 105, 22, { align: 'center' });
+            
+            // Informacje o uczniu
+            doc.setFontSize(14);
+            doc.text("Wynik testu", 20, 35);
+            
+            doc.setFontSize(12);
+            doc.text(`Imię i nazwisko: ${studentData.firstName} ${studentData.lastName}`, 20, 45);
+            doc.text(`Klasa: ${studentData.class}`, 20, 52);
+            doc.text(`Data wykonania testu: ${studentData.endTime.toLocaleDateString('pl-PL')}`, 20, 59);
+            doc.text(`Czas wykonania: ${formatTime(studentData.startTime, studentData.endTime)}`, 20, 66);
+            
+            // Wynik
+            doc.setFontSize(16);
+            doc.text(`Wynik: ${studentData.score} / 45 punktów`, 20, 80);
+            
+            // Zalecany poziom
+            doc.setFontSize(14);
+            doc.text(`Zalecany poziom podręcznika: ${recommendedLevel.textContent}`, 20, 90);
+            
+            // Podsumowanie części
+            doc.setFontSize(12);
+            let yPos = 105;
+            
+            // Obliczenie wyników części
+            const partScores = {
+                "Grammar": { correct: 0, total: 15 },
+                "Vocabulary": { correct: 0, total: 15 },
+                "Use of English": { correct: 0, total: 10 },
+                "Reading": { correct: 0, total: 5 }
+            };
+            
+            testData.questions.forEach(question => {
+                const userAnswer = studentData.answers[question.id];
+                const correctAnswer = testData.answerKey[question.id];
+                
+                if (userAnswer === correctAnswer) {
+                    partScores[question.part].correct++;
+                }
+            });
+            
+            doc.text("Podsumowanie części testu:", 20, yPos);
+            yPos += 10;
+            
+            for (const [part, scores] of Object.entries(partScores)) {
+                doc.text(`${part}: ${scores.correct}/${scores.total} punktów`, 30, yPos);
+                yPos += 7;
+            }
+            
+            // Szczegółowe odpowiedzi
+            yPos += 10;
+            doc.setFontSize(14);
+            doc.text("Szczegółowe odpowiedzi:", 20, yPos);
+            
+            doc.setFontSize(10);
+            yPos += 10;
+            
+            testData.questions.forEach((question, index) => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const userAnswer = studentData.answers[question.id];
+                const correctAnswer = testData.answerKey[question.id];
+                const isCorrect = userAnswer === correctAnswer;
+                
+                doc.setTextColor(isCorrect ? 0 : 255, 0, 0);
+                doc.text(`Pytanie ${question.id}: ${question.text.substring(0, 40)}...`, 20, yPos);
+                doc.text(`Twoja odpowiedź: ${userAnswer || 'Brak'} | Poprawna odpowiedź: ${correctAnswer}`, 30, yPos + 5);
+                
+                yPos += 12;
+            });
+            
+            // Stopka
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Wygenerowano: ${new Date().toLocaleString('pl-PL')}`, 105, 290, { align: 'center' });
+            
+            // Zapis PDF
+            doc.save(`wynik_testu_${studentData.lastName}_${studentData.firstName}.pdf`);
+        }
+        
+        // Wysłanie wyników do bazy danych
+        async function sendResultsToDatabase() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('test_results')
+                    .insert([
+                        {
+                            first_name: studentData.firstName,
+                            last_name: studentData.lastName,
+                            class: studentData.class,
+                            score: studentData.score,
+                            max_score: totalQuestions,
+                            answers: studentData.answers,
+                            start_time: studentData.startTime.toISOString(),
+                            end_time: studentData.endTime.toISOString(),
+                            test_name: testData.testName
+                        }
+                    ]);
+                
+                if (error) {
+                    console.error('Błąd zapisu do bazy danych:', error);
+                } else {
+                    console.log('Wyniki zapisane do bazy danych:', data);
+                }
+            } catch (err) {
+                console.error('Błąd połączenia z bazą danych:', err);
+            }
+        }
+        
+        // Restart testu
+        restartTestBtn.addEventListener('click', function() {
+            // Resetowanie danych
+            studentData = {
+                firstName: "",
+                lastName: "",
+                class: "",
+                startTime: null,
+                endTime: null,
+                answers: {},
+                score: 0
+            };
+            
+            currentQuestion = 1;
+            timeLeft = 45 * 60;
+            
+            // Resetowanie formularza
+            document.getElementById('firstName').value = "";
+            document.getElementById('lastName').value = "";
+            document.getElementById('class').value = "";
+            
+            // Przejście do ekranu rejestracji
+            resultsScreen.classList.remove('active');
+            registrationScreen.classList.add('active');
+        });
+        
+        // Inicjalizacja przy pierwszym załadowaniu
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("System testu diagnostycznego z języka angielskiego został załadowany.");
+        });
+    </script>
+</body>
+</html>
 
